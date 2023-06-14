@@ -1,6 +1,12 @@
 #!/bin/bash
 
 admin_opcije() {
+    local brojac="$1"
+
+    if [[ "$brojac" -gt 0 ]]; then
+        echo -e "\t\t\e[32mOpcije\e[0m"
+        ispis_linija "40" "crvena"
+    fi
     echo -e "\t\b\b\b1. Dodavanje novog taxi vozila"
     echo -e "\t\b\b\b2. Uredivanje informacija"
     echo -e "\t\b\b\b3. Pregled informacija o vožnjama"
@@ -11,6 +17,12 @@ admin_opcije() {
 }
 
 korisnik_opcije() {
+    local brojac="$1"
+
+    if [[ "$brojac" -gt 0 ]]; then
+        echo -e "\t\t\e[32mOpcije\e[0m"
+        ispis_linija "40" "crvena"
+    fi
     echo -e "\t\b\b\b1. Rezervacija taxi vozila"
     echo -e "\t\b\b\b2. Pregled informacija o voznjama"
     echo -e "\t\b\b\b3. Exit"
@@ -90,7 +102,10 @@ informacije_voznje() {
         else 
             echo
             read -p "Unesite ID vozila koje zelite prikazati: " voziloID
+            clear
+            echo -e "\t\e[97mVozilo sa unesenim ID\e[0m"
             informacije_vozilo "$voziloID"
+            ispis_linija "48" "plava" 
             echo
             read -p "Želite li prikazati informacije o vozacu tog vozila? (da/ne): " odabir
             echo
@@ -100,7 +115,12 @@ informacije_voznje() {
                 return
             else 
                 echo
+                echo -e "\t\e[97mVozac odabranog vozila\e[0m"
                 prikaz_vozaca "$voziloID" "0"
+                ispis_linija "40" "plava"
+                read -p "Pritisnite enter za nastavak!" nastavak
+                clear
+                echo
             fi
         fi
     fi
@@ -523,16 +543,16 @@ ispis_zarade () {
     query="SELECT SUM(cijena_voznje) FROM zarada WHERE vozac_id=$vozacID"
     local suma_zarade=$(mysql -u root -D taxi_sistem -N -e "$query")
 
-    IFS=' '
-
-    read -ra argumenti <<< "$result"
+    if [[  "$suma_zarade"=='NULL' ]]; then
+        suma_zarade=0
+    fi
 
     clear
     echo  -e "   \e[97m       Prikaz zarade vozaca\e[0m"
     ispis_linija "40" "crvena"
-    echo -e "\e[33m ID     Ime \t \b\bPrezime \t  \b\bZarada\e[0m"
+    echo -e "\e[33m ID     Ime \t Prezime \tZarada\e[0m"
     ispis_linija "40" "crvena"
-    echo -e "  $vozacID\t${argumenti[0]}\t${argumenti[1]}\e[97m $suma_zarade KM\e[0m"
+    echo -e "  $vozacID\t$result \t\e[97m$suma_zarade KM\e[0m"
 
 }
 
@@ -548,12 +568,9 @@ uredjivanje_informacija() {
             1)
                 clear
                 prikaz_svih_vozila
-                echo -e "\e[34m-----------------------------------------------\e[0m"
+                ispis_linija "48" "plava"
                 echo
                 uredivanje_vozila
-                read -p "Pritisnite enter za nastavak!" nastavak
-                clear
-                echo
                 ;;
 
             2)
@@ -728,9 +745,9 @@ prikaz_stanja_opcije()
 
 odabir_opcije_admin() 
 {
-    
+    local brojac=0
     while true; do
-        admin_opcije
+        admin_opcije "$brojac"
         read -p "Odaberite opciju: " opcija
         echo
 
@@ -801,15 +818,16 @@ odabir_opcije_admin()
                 echo "Neispravan izbor. Pokusajte ponovno."
                 ;;
         esac
-
+        ((brojac++))
     done
 }
 
 odabir_opcije_korisnik() {
     
+    local brojac=0
     local korisnik="$1"
     while true; do
-        korisnik_opcije
+        korisnik_opcije "$brojac"
         read -p "Odaberite opciju: " opcija
         echo
         case "$opcija" in
@@ -819,15 +837,23 @@ odabir_opcije_korisnik() {
                 echo -e "\t\t\b\b\b\b\b\e[97mRezervacija taxi vozila\e[0m"
                 if prikaz_vozila_uslov "stanje" "Slobodno"; then
                     rezervacija_vozila "$korisnik"
+                    ispis_linija "60" "plava"
                 else 
                     clear
                     echo -e "\t\e[97mNema slobodnih vozila za rezervaciju\e[0m"
+                    ispis_linija "50" "plava"
                 fi
+                echo
+                read -p "Pritisnite enter za nastavak!" nastavak
+                clear
                 ;;
             2)
                 clear
                 informacije_voznje "$korisnik" "1"
-               
+                ispis_linija "64" "plava"
+                echo
+                read -p "Pritisnite enter za nastavak!" nastavak
+                clear
                 ;;
             3)
                 clear
@@ -839,14 +865,7 @@ odabir_opcije_korisnik() {
                 echo "Neispravan izbor. Pokusajte ponovno."
                 ;;
         esac
-
-        echo
-        read -p "Zelite li odabrati sljedecu opciju? (da/ne): " odabir
-        echo
-
-        if [[ "$odabir" != "da" && "$odabir" != "DA" && "$odabir" != "Da" && "$odabir" != "dA" ]]; then
-            break
-        fi
+        ((brojac++))
     done
 }
 
@@ -865,13 +884,13 @@ main() {
         if provjera_admin "$username" "$password"; then
             clear
             echo  -e "   \e[32mUspjesno ste prijavljeni kao admin\e[0m"
-            echo -e "\e[31m--------------------------------------------\e[0m"
+            ispis_linija "40" "crvena"
             odabir_opcije_admin
             break  
         elif provjera_korisnik "$username" "$password"; then
             clear
             echo -e "   \e[32mUspjesno ste prijavljeni kao korisnik\e[0m"
-            echo -e "\e[31m--------------------------------------------\e[0m"
+            ispis_linija "40" "crvena"
             odabir_opcije_korisnik "$username"
             break
         else
