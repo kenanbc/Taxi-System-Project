@@ -1,0 +1,128 @@
+CREATE TABLE admin
+(
+	admin_id int NOT NULL AUTO_INCREMENT,
+	username varchar(50),
+	lozinka varchar(50),
+	CONSTRAINT admin_id PRIMARY KEY (admin_id)
+);
+
+
+CREATE TABLE vozila
+(
+	vozilo_id int NOT NULL AUTO_INCREMENT,
+	marka varchar(50),
+	model varchar(50),
+    	registracija varchar(50),
+    	stanje varchar(50),
+	CONSTRAINT vozilo_id PRIMARY KEY (vozilo_id)
+);
+
+
+CREATE TABLE voznja
+(
+	voznja_id int NOT NULL AUTO_INCREMENT,
+	polaziste varchar(50),
+	odrediste varchar(50),
+    	vozac varchar(50),
+   	 broj_putnika int,
+    	cijena_voznje int,
+	CONSTRAINT voznja_id PRIMARY KEY (voznja_id)
+);
+
+
+CREATE TABLE korisnik
+(
+	korisnik_id int NOT NULL AUTO_INCREMENT,
+	ime varchar(50),
+	lozinka varchar(50),
+	CONSTRAINT korisnik_id PRIMARY KEY (korisnik_id)
+);
+
+
+CREATE TABLE vozac
+(
+		vozac_id int NOT NULL AUTO_INCREMENT,
+		ime varchar(50),
+		prezime varchar(50),
+    	broj_telefona varchar(50),
+    	adresa varchar(50),
+		CONSTRAINT PK_vozac_id PRIMARY KEY (vozac_id)
+);
+
+INSERT INTO admin (username, lozinka)
+VALUES ('kenanbabic', 'sifra123')
+
+
+INSERT INTO admin (username, lozinka)
+VALUES ('osmanhalilovic', 'sifra123')
+
+INSERT INTO korisnik (ime, lozinka)
+VALUES ('Amina', 'sifra123')
+
+INSERT INTO korisnik (ime, lozinka)
+VALUES ('Anis', 'sifra123')
+
+
+INSERT INTO vozila(`marka`, `model`, `registracija`, `stanje`) 
+VALUES ('Volkswagen','Passat B6','A21-J-930','Slobodno')
+
+INSERT INTO vozila(`marka`, `model`, `registracija`, `stanje`) 
+VALUES ('Volkswagen','Golf 6','E50-A-650','Slobodno')
+
+INSERT INTO vozila(`marka`, `model`, `registracija`, `stanje`) 
+VALUES ('Volkswagen','Golf 5','E80-K-734','Servis')
+
+INSERT INTO vozila(`marka`, `model`, `registracija`, `stanje`) 
+VALUES ('Renault','Scenic','G13-J-630','Zauzeto')
+
+
+INSERT INTO `vozac`( `ime`, `prezime`, `broj_telefona`, `adresa`) 
+VALUES ('Damir','Bajric','0644530155','Rudarska 51')
+
+
+INSERT INTO `vozac`(`ime`, `prezime`, `broj_telefona`, `adresa`)
+VALUES ('Hamid','Rustemovic','061995927','VI Bosanske brigade')
+
+INSERT INTO `vozac`(`ime`, `prezime`, `broj_telefona`, `adresa`)
+VALUES ('Ramiz','Omerbasic','062896937','Mese Selimovica 10')
+
+INSERT INTO `vozac`(`ime`, `prezime`, `broj_telefona`, `adresa`)
+VALUES ('Nusret','Basic','062456310','Rudarska 16')
+
+INSERT INTO `vozac`(`ime`, `prezime`, `broj_telefona`, `adresa`)
+VALUES ('Adnan','Hilmic','063427516','Dzafer mahala 12')
+
+ALTER TABLE voznja
+ADD vozilo_id int NOT NULL
+
+ALTER TABLE voznja
+ADD putnik_id int NOT NULL
+
+ALTER TABLE voznja
+ADD vozac_id int NOT NULL
+
+
+ALTER TABLE voznja
+DROP COLUMN vozac
+
+ALTER TABLE vozila
+ADD vozac_id int
+
+
+ALTER TABLE voznja
+ADD CONSTRAINT FK_vozilo_id FOREIGN KEY (vozilo_id) REFERENCES vozila (vozilo_id)
+
+ALTER TABLE vozila
+ADD CONSTRAINT FK_vozac_id FOREIGN KEY (vozac_id) REFERENCES vozac (vozac_id)
+
+INSERT INTO `voznja`(`polaziste`, `odrediste`, `vozac`, `broj_putnika`, `cijena_voznje`, `vozilo_id`) 
+VALUES ('Slatina','Sjenjak','Hamid Rustemovic','2','7','1')
+
+INSERT INTO `voznja`(`polaziste`, `odrediste`, `broj_putnika`, `cijena_voznje`, `vozilo_id`, `putnik_id`, `vozac_id`) 
+VALUES ('Tusanj','Gradina',4,6,2,2,2)
+
+INSERT INTO `voznja`(`polaziste`, `odrediste`, `broj_putnika`, `cijena_voznje`, `vozilo_id`, `putnik_id`, `vozac_id`) 
+VALUES ('Gradina','Rudarska', 3, 10, 3, 3, 3)
+
+INSERT INTO `voznja`(`polaziste`, `odrediste`, `broj_putnika`, `cijena_voznje`, `vozilo_id`, `putnik_id`, `vozac_id`) 
+VALUES ('Mosnik','Slatina', 1, 5, 4, 4, 4)
