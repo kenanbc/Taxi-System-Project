@@ -84,9 +84,9 @@ informacije_voznje() {
     fi
 
 
-    echo -e "\e[31m----------------------------------------------------------------\e[0m"
+    ispis_linija "64" "crvena"
     echo -e "\e[33m   Polaziste \t   Odrediste \t   Broj putnika\t    Vozilo ID\e[0m"
-    echo -e "\e[31m----------------------------------------------------------------\e[0m"
+    ispis_linija "64" "crvena"
     while IFS= read -r line; do
         printf "    %-15s %-19s %-11s     %-4s\n" $line
     done <<< "$result"
@@ -133,9 +133,9 @@ informacije_vozilo() {
     local result=$(mysql -u root -D taxi_sistem -s -N -e "$query")
 
     echo
-    echo -e "\e[31m------------------------------------------------\e[0m"
+    ispis_linija "48" "crvena"
     echo -e "\e[33m     Marka \t     Model \t   Registracija\e[0m"
-    echo -e "\e[31m------------------------------------------------\e[0m"
+    ispis_linija "48" "crvena"
     while IFS= read -r line; do
         printf "    %-15s %-15s %-8s\n" $line
     done <<< "$result"
@@ -160,6 +160,9 @@ dodavanje_vozila() {
         echo
         query="UPDATE vozac SET vozilo_id=$voziloID WHERE vozac_id=$vozacID"
         mysql -u root -D taxi_sistem -s -N -e "$query"
+        clear
+        prikaz_vozila_uslov "vozilo_id" "$voziloID"
+        ispis_linija "48" "plava"
         echo -e "\t\e[97mUspješno ste dodali novo vozilo\e[0m"
     else
         echo "Doslo je do greske prilikom unosa!"
@@ -172,9 +175,9 @@ prikaz_svih_vozila() {
     local query="SELECT vozilo_id, marka, model, registracija  FROM vozila ORDER BY vozilo_id"
     local result=$(mysql -u root -D taxi_sistem -N -e "$query")
 
-    echo -e "\e[31m------------------------------------------------\e[0m"
+    ispis_linija "48" "crvena"
     echo -e "\e[33m ID     Marka \t       Model \t   Registracija\e[0m"
-    echo -e "\e[31m------------------------------------------------\e[0m"
+    ispis_linija "48" "crvena"
     while IFS= read -r line; do
         printf " %-4s %-15s %-15s %-8s\n" $line
     done <<< "$result"
@@ -195,7 +198,7 @@ prikaz_vozila_uslov() {
     else
         ispis_linija "48" "crvena"
         echo -e "\e[33m ID     Marka \t       Model \t   Registracija\e[0m"
-        echo -e "\e[31m------------------------------------------------\e[0m"
+        ispis_linija "48" "crvena"
         while IFS= read -r line; do
             printf " %-4s %-15s %-15s %-8s\n" $line
         done <<< "$result"
@@ -371,7 +374,7 @@ sql_uredjivanje_vozaca() {
 uredjivanje_vozaca() {
 
     echo -e "\t\e[97mUredjivanje vozaca\e[0m"
-    echo -e "\e[34m----------------------------------\e[0m"
+    ispis_linija "33" "crvena"
     echo "  1. Dodaj vozaca"
     echo "  2. Uredi informacije o vozacu"
     echo
@@ -383,7 +386,7 @@ uredjivanje_vozaca() {
             1) 
                 clear
                 echo -e "\t\e[97mDodavanje novog vozaca\e[0m"
-                echo -e "\e[34m--------------------------------------\e[0m"
+                ispis_linija "33" "crvena"
                 read -p "Unesite ime vozaca: " ime
                 read -p "Unesite prezime vozaca: " prezime
                 read -p "Unesite broj telefona: " broj_telefona
@@ -448,7 +451,13 @@ uredjivanje_vozaca() {
                         prikaz_vozaca "$vozacID" "13"
                         ispis_linija "47" "plava" 
                     ;;
-                    3)
+                    3)  
+                        clear
+                        echo -e "\t\e[97mTrenutno vozilo odabranog vozaca\e[0m"
+                        local query="SELECT vozilo_id FROM vozila WHERE vozac_id=$vozacID"
+                        local voziloID=$(mysql -u root -D taxi_sistem -N -e "$query")
+                        prikaz_vozila_uslov "vozilo_id" "$voziloID"
+                        ispis_linija "48" "plava"
                         sql_uredjivanje_vozaca "vozilo_id" "3" "$vozacID"
                     ;;
                     *)
@@ -658,6 +667,7 @@ uredivanje_vozila()
                     clear
                     echo -e "\t\t\b\b\b\e[97mOdabrali ste vozilo\e[0m"
                     prikaz_vozila_uslov "vozilo_id" "$voziloID"
+                    ispis_linija "47" "plava"
                     echo
                     read -p "Unesite novu registraciju vozila: " nova_registracija
                     celija="registracija"
@@ -665,7 +675,7 @@ uredivanje_vozila()
                     clear
                     echo -e "\t\e[97mUspjesno ste azurirali podatke\e[0m"
                     prikaz_vozila_uslov "vozilo_id" "$voziloID" 
-                    echo -e "\e[34m------------------------------------------------\e[0m"
+                    ispis_linija "48" "plava"
                     read -p "Pritisnite enter za nastavak!" nastavak
                     clear
                     echo
@@ -674,7 +684,7 @@ uredivanje_vozila()
                     clear
                     echo -e "\t\t\b\b\b\e[97mOdabrali ste vozilo\e[0m"
                     prikaz_vozila_stanje "$voziloID"
-                    echo -e "\e[34m-----------------------------------------------\e[0m"
+                    ispis_linija "47" "plava"
                     echo -e "Moguca stanja: \e[97mSlobodno Voznja Pauza Servis \e[0m"
                     echo
                     read -p "Unesite novo stanje vozila: " stanje
@@ -689,7 +699,7 @@ uredivanje_vozila()
                         prikaz_vozila_stanje "$voziloID"
                     fi
 
-                    echo -e "\e[34m------------------------------------------------\e[0m"
+                    ispis_linija "48" "plava"
                     read -p "Pritisnite enter za nastavak!" nastavak
                     clear
                     echo
@@ -698,19 +708,19 @@ uredivanje_vozila()
                     clear
                     echo -e "\t\b\b\b\e[97mTrenutni vozac odabranog vozila\e[0m"
                     prikaz_vozaca "$voziloID" "0"
-                    echo -e "\e[34m-----------------------------------------------\e[0m"
+                    ispis_linija "48" "plava"
                     echo
                     echo -e "\t\b\b\b\e[97mTrenutni vozaci bez vozila\e[0m"
                     prikaz_vozaca "NULL" "5" 
                     local prvi_vozac=$(sql_odabir_vozaca "$voziloID")
-                    echo -e "\e[34m-----------------------------------------------\e[0m"
+                    ispis_linija "48" "plava"
                     echo
                     read -p "Unesite ID novog vozaca vozila: " IDvozaca
                     sql_uredjivanje_vozila "vozac_id" "$IDvozaca" "$voziloID"
                     sql_promjena_vozaca "$prvi_vozac" "$IDvozaca" "$voziloID"
                     clear
                     echo -e "\t\e[97mUspjesno ste azurirali podatke\e[0m"
-                    echo -e "\e[34m-----------------------------------------------\e[0m"
+                    ispis_linija "48" "plava"
                     read -p "Pritisnite enter za nastavak!" nastavak
                     clear
                     echo
@@ -718,7 +728,7 @@ uredivanje_vozila()
                 *)
                     clear
                     echo -e "\t\t\e[97mNeispravan izbor!\e[0m"
-                    echo -e "\e[34m-----------------------------------------------\e[0m"
+                    ispis_linija "47" "plava"
                     read -p "Pritisnite enter za nastavak!" nastavak
                     clear
                     ;;
@@ -726,7 +736,7 @@ uredivanje_vozila()
     else 
         echo
         echo -e "\t\b\b\b\e[97mVozilo sa unesenim ID ne postoji!\e[0m"
-        echo -e "\e[34m-----------------------------------------------\e[0m"
+        ispis_linija "47" "plava"
         read -p "Pritisnite enter za nastavak!" nastavak
         clear
 
@@ -756,15 +766,19 @@ odabir_opcije_admin()
                 clear
                 echo
                 echo -e "\t\e[97mDodavanje novog taxi vozila\e[0m"
-                echo -e "\e[34m-----------------------------------------------\e[0m"
+                ispis_linija "47" "plava"
                 dodavanje_vozila
+                ispis_linija "48" "plava"
+                echo
+                read -p "Pritisnite enter za nastavak!" nastavak
+                clear
                 echo
                 ;;
             2)
                 clear
                 echo
                 echo -e "\t\e[97mUredivanje informacija\e[0m"
-                echo -e "\e[34m---------------------------------------\e[0m"
+                ispis_linija "47" "plava"
                 uredjivanje_informacija
                 ;;
             3)
