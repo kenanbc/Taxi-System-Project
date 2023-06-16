@@ -143,14 +143,21 @@ informacije_vozilo() {
 }
 
 dodavanje_vozila() {
-    echo
     read -p "Unesite marku vozila: " marka
     read -p "Unesite model vozila: " model
     read -p "Unesite registraciju vozila: " registracija
     read -p "Unesite stanje vozila: " stanje
     read -p "Unesite ID vozaca vozila: " vozacID
 
-    local query="INSERT INTO vozila (\`marka\`, \`model\`, \`registracija\`, \`stanje\`, \`vozac_id\`) VALUES ('$marka','$model','$registracija','$stanje', '$vozacID')"
+    local unos=", \`vozac_id\`"
+    local vrijednost_unosa=", '$vozacID'"
+
+    if [[ -z "$vozacID" ]]; then
+        unos=""
+        vrijednost_unosa=""
+    fi
+
+    local query="INSERT INTO vozila (\`marka\`, \`model\`, \`registracija\`, \`stanje\` $unos) VALUES ('$marka','$model','$registracija','$stanje' $vrijednost_unosa)"
     mysql -u root -D taxi_sistem -N -e "$query"
 
     query="SELECT vozilo_id FROM vozila WHERE registracija='$registracija'"
@@ -203,6 +210,20 @@ prikaz_vozila_uslov() {
             printf " %-4s %-15s %-15s %-8s\n" $line
         done <<< "$result"
     fi
+}
+
+provjera_vozila () 
+{
+    local voziloID="$1"
+    
+    local query="SELECT vozac_id FROM vozila WHERE vozilo_id = $voziloID"
+    local vozacID=$(mysql -u root -D taxi_sistem -N -e "$query")
+
+    if [[ "$vozacID" == "NULL" ]]; then 
+        return 0
+    fi
+        return 1
+
 }
 
 prikaz_vozaca() {
@@ -706,14 +727,19 @@ uredivanje_vozila()
                     ;;
                 3)
                     clear
-                    echo -e "\t\b\b\b\e[97mTrenutni vozac odabranog vozila\e[0m"
-                    prikaz_vozaca "$voziloID" "0"
-                    ispis_linija "48" "plava"
+                    if provjera_vozila "$voziloID"; then 
+                        echo -e "\t\e[97mVozilo trenutno nema vozaca\e[0m"
+                        ispis_linija "48" "plava"
+                    else
+                        echo -e "\t\b\b\b\e[97mTrenutni vozac odabranog vozila\e[0m"
+                        prikaz_vozaca "$voziloID" "0"
+                        ispis_linija "40" "plava"
+                    fi
                     echo
                     echo -e "\t\b\b\b\e[97mTrenutni vozaci bez vozila\e[0m"
                     prikaz_vozaca "NULL" "5" 
                     local prvi_vozac=$(sql_odabir_vozaca "$voziloID")
-                    ispis_linija "48" "plava"
+                    ispis_linija "35" "plava"
                     echo
                     read -p "Unesite ID novog vozaca vozila: " IDvozaca
                     sql_uredjivanje_vozila "vozac_id" "$IDvozaca" "$voziloID"
