@@ -57,6 +57,21 @@ provjera_korisnik() {
     fi
 }
 
+vozilo_vozac_join() {
+
+    local voziloID="$1"
+    local query="SELECT vozila.marka, vozila.registracija, vozac.ime, vozac.prezime FROM vozila INNER JOIN vozac ON vozila.vozac_id = vozac.vozac_id WHERE vozila.vozilo_id = $voziloID"
+    local result=$(mysql -u root -D taxi_sistem -N -e "$query")
+
+    ispis_linija "64" "crvena"
+    echo -e "\e[33m   Marka\t\bRegistracija \t Ime\t     Prezime\e[0m"
+    ispis_linija "64" "crvena"
+    while IFS= read -r line; do
+        printf " %-10s\t%-15s %-11s  %-4s\n" $line
+    done <<< "$result"
+
+}
+
 informacije_voznje() {
 
     local korisnik="$1"
@@ -76,7 +91,6 @@ informacije_voznje() {
     query="SELECT polaziste, odrediste, broj_putnika, vozilo_id FROM voznja $vrijednost_uslova"
     local result=$(mysql -u root -D taxi_sistem -N -e "$query")
 
-    echo
     if [[ $provjera -eq 1 ]]; then
         echo -e "\t\t\t\b\b \e[97mVase voznje \e[0m"
     else 
@@ -91,37 +105,29 @@ informacije_voznje() {
         printf "    %-15s %-19s %-11s     %-4s\n" $line
     done <<< "$result"
 
-    echo
     if [[ "$uslov" -ne 1 ]]; then
+        ispis_linija "64" "plava"
         read -p "Želite li prikazati informacije o vozilu? (da/ne): " odabir
         echo
-
         if [[ "$odabir" != "da" && "$odabir" != "DA" && "$odabir" != "Da" && "$odabir" != "dA" ]]; then
             clear
             return
         else 
-            echo
+            clear
+            echo -e "\t\t \e[97mInformacije o voznjama \e[0m"
+            ispis_linija "64" "crvena"
+            echo -e "\e[33m   Polaziste \t   Odrediste \t   Broj putnika\t    Vozilo ID\e[0m"
+            ispis_linija "64" "crvena"
+            while IFS= read -r line; do
+            printf "    %-15s %-19s %-11s     %-4s\n" $line
+            done <<< "$result"
+            ispis_linija "64" "plava"
             read -p "Unesite ID vozila koje zelite prikazati: " voziloID
             clear
-            echo -e "\t\e[97mVozilo sa unesenim ID\e[0m"
-            informacije_vozilo "$voziloID"
-            ispis_linija "48" "plava" 
-            echo
-            read -p "Želite li prikazati informacije o vozacu tog vozila? (da/ne): " odabir
-            echo
-
-            if [[ "$odabir" != "da" && "$odabir" != "DA" && "$odabir" != "Da" && "$odabir" != "dA" ]]; then
-                clear
-                return
-            else 
-                echo
-                echo -e "\t\e[97mVozac odabranog vozila\e[0m"
-                prikaz_vozaca "$voziloID" "0"
-                ispis_linija "40" "plava"
-                read -p "Pritisnite enter za nastavak!" nastavak
-                clear
-                echo
-            fi
+            vozilo_vozac_join "$voziloID"
+            ispis_linija "64" "plava"
+            read -p "Pritisnite enter za nastavak!" nastavak
+            clear
         fi
     fi
 }
@@ -203,9 +209,9 @@ prikaz_vozila_uslov() {
         echo -e "\t\t\b\b\e[97mNema vozila za prikaz\e[0m"
         return 1
     else
-        ispis_linija "48" "crvena"
+        ispis_linija "50" "crvena"
         echo -e "\e[33m ID     Marka \t       Model \t   Registracija\e[0m"
-        ispis_linija "48" "crvena"
+        ispis_linija "50" "crvena"
         while IFS= read -r line; do
             printf " %-4s %-15s %-15s %-8s\n" $line
         done <<< "$result"
@@ -223,6 +229,19 @@ provjera_vozila ()
         return 0
     fi
         return 1
+
+}
+
+provjera_vozaca () 
+{
+    
+    local query="SELECT vozilo_id FROM vozac WHERE vozilo_id IS NULL"
+    local voziloID=$(mysql -u root -D taxi_sistem -N -e "$query")
+
+    if [[ -z "$vozacID" ]]; then 
+        return 1
+    fi
+        return 0
 
 }
 
@@ -363,7 +382,16 @@ sql_uredjivanje_vozila() {
     local vrijednost="$2"
     local voziloID="$3"
 
-    local query="UPDATE vozila SET $celija='$vrijednost'  WHERE vozilo_id=$voziloID"
+    if [[ "$vrijednost" =~ ^[0-9]+$ ]]; then
+        local vrijednost_query=$vrijednost
+
+    elif [[ "$vrijednost" == "NULL" ]]; then
+        local vrijednost_query=$vrijednost
+    else
+        local vrijednost_query="'$vrijednost'"
+    fi
+
+    local query="UPDATE vozila SET $celija=$vrijednost_query  WHERE vozilo_id=$voziloID"
     mysql -u root -D taxi_sistem -N -e "$query"
 
 }
@@ -387,6 +415,7 @@ sql_uredjivanje_vozaca() {
     fi
     
     mysql -u root -D taxi_sistem -e "$query"
+    echo "$vrijednost"
 
 }
 
@@ -479,7 +508,12 @@ uredjivanje_vozaca() {
                         local voziloID=$(mysql -u root -D taxi_sistem -N -e "$query")
                         prikaz_vozila_uslov "vozilo_id" "$voziloID"
                         ispis_linija "48" "plava"
-                        sql_uredjivanje_vozaca "vozilo_id" "3" "$vozacID"
+                        local vrijednost=$(sql_uredjivanje_vozaca "vozilo_id" "3" "$vozacID")
+                        sql_uredjivanje_vozila "vozac_id" "$vozacID" "$vrijednost"
+                        sql_uredjivanje_vozila "vozac_id" "NULL" "$voziloID"
+                        clear
+                        prikaz_vozila_uslov "vozac_id" "$vozacID"
+                        ispis_linija "48" "plava"
                     ;;
                     *)
                         echo "Pogresan unos!";
@@ -564,7 +598,6 @@ rezervacija_vozila() {
 
 ispis_zarade () {
 
-
     local vozacID="$1"
 
     local query="SELECT ime, prezime FROM vozac WHERE vozac_id=$vozacID"
@@ -573,16 +606,16 @@ ispis_zarade () {
     query="SELECT SUM(cijena_voznje) FROM zarada WHERE vozac_id=$vozacID"
     local suma_zarade=$(mysql -u root -D taxi_sistem -N -e "$query")
 
-    if [[  "$suma_zarade"=='NULL' ]]; then
+    if [[  "$suma_zarade" == 'NULL' ]]; then
         suma_zarade=0
     fi
-
+    
     clear
     echo  -e "   \e[97m       Prikaz zarade vozaca\e[0m"
     ispis_linija "40" "crvena"
     echo -e "\e[33m ID     Ime \t Prezime \tZarada\e[0m"
     ispis_linija "40" "crvena"
-    echo -e "  $vozacID\t$result \t\e[97m$suma_zarade KM\e[0m"
+    echo -e "  $vozacID\t$result \t \e[97m$suma_zarade KM\e[0m"
 
 }
 
@@ -624,8 +657,6 @@ uredjivanje_informacija() {
                 echo "Pogresan unos"
             ;;
     esac
-
-    
 
 }
 
@@ -688,7 +719,7 @@ uredivanje_vozila()
                     clear
                     echo -e "\t\t\b\b\b\e[97mOdabrali ste vozilo\e[0m"
                     prikaz_vozila_uslov "vozilo_id" "$voziloID"
-                    ispis_linija "47" "plava"
+                    ispis_linija "50" "plava"
                     echo
                     read -p "Unesite novu registraciju vozila: " nova_registracija
                     celija="registracija"
@@ -696,7 +727,7 @@ uredivanje_vozila()
                     clear
                     echo -e "\t\e[97mUspjesno ste azurirali podatke\e[0m"
                     prikaz_vozila_uslov "vozilo_id" "$voziloID" 
-                    ispis_linija "48" "plava"
+                    ispis_linija "50" "plava"
                     read -p "Pritisnite enter za nastavak!" nastavak
                     clear
                     echo
@@ -735,11 +766,16 @@ uredivanje_vozila()
                         prikaz_vozaca "$voziloID" "0"
                         ispis_linija "40" "plava"
                     fi
-                    echo
-                    echo -e "\t\b\b\b\e[97mTrenutni vozaci bez vozila\e[0m"
-                    prikaz_vozaca "NULL" "5" 
+                    if provjera_vozaca; then
+                        echo -e "\t\e[97mTrenutno nema slobodnih vozaca\e[0m"
+                        ispis_linija "48" "plava"
+                    else
+                        echo
+                        echo -e "\t\b\b\b\e[97mTrenutni vozaci bez vozila\e[0m"
+                        prikaz_vozaca "NULL" "5"
+                        ispis_linija "35" "plava"
+                    fi
                     local prvi_vozac=$(sql_odabir_vozaca "$voziloID")
-                    ispis_linija "35" "plava"
                     echo
                     read -p "Unesite ID novog vozaca vozila: " IDvozaca
                     sql_uredjivanje_vozila "vozac_id" "$IDvozaca" "$voziloID"
@@ -914,10 +950,10 @@ main() {
     clear
     while true; do
     echo
-        echo -n "  Unesite vaš username: "
+        echo -n -e " \e[97mUnesite vaš username: \e[0m"
         read username
         echo
-        echo -n "  Unesite vašu lozinku: "
+        echo -n -e " \e[97mUnesite vašu lozinku: \e[0m"
         read password
         echo
         
@@ -934,7 +970,7 @@ main() {
             odabir_opcije_korisnik "$username"
             break
         else
-            echo -e "\tPogresno korisničko ime ili lozinka. Pokusajte ponovno."
+            echo -e "\tPogresan username ili lozinka. Pokusajte ponovno."
             echo
         fi
     done
