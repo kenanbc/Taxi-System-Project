@@ -1,12 +1,14 @@
 #!/bin/bash
 
 admin_opcije() {
+
     local brojac="$1"
 
     if [[ "$brojac" -gt 0 ]]; then
         echo -e "\t\t\e[32mOpcije\e[0m"
         ispis_linija "40" "crvena"
     fi
+
     echo -e "\t\b\b\b1. Dodavanje novog taxi vozila"
     echo -e "\t\b\b\b2. Uredivanje informacija"
     echo -e "\t\b\b\b3. Pregled informacija o vožnjama"
@@ -33,7 +35,7 @@ provjera_admin() {
     local username="$1"
     local password="$2"
     
-    local query="SELECT username, lozinka FROM admin WHERE username='$username' AND lozinka='$password'"
+    local query="SELECT username, lozinka FROM admin WHERE BINARY username = '$username' AND BINARY lozinka = '$password'"
     local result=$(mysql -u root -D taxi_sistem -N -e "$query" | wc -l)
     
     if [[ $result -eq 1 ]]; then
@@ -47,7 +49,7 @@ provjera_korisnik() {
     local username="$1"
     local password="$2"
     
-    local query="SELECT ime, lozinka FROM korisnik WHERE ime LIKE '$username' AND lozinka LIKE'$password'"
+    local query="SELECT ime, lozinka FROM korisnik WHERE BINARY ime = '$username' AND BINARY lozinka = '$password'"
     local result=$(mysql -u root -D taxi_sistem -N -e "$query" | wc -l)
     
     if [[ $result -eq 1 ]]; then
@@ -98,15 +100,15 @@ informacije_voznje() {
     fi
 
 
-    ispis_linija "64" "crvena"
+    ispis_linija "60" "crvena"
     echo -e "\e[33m   Polaziste \t   Odrediste \t   Broj putnika\t    Vozilo ID\e[0m"
-    ispis_linija "64" "crvena"
+    ispis_linija "60" "crvena"
     while IFS= read -r line; do
         printf "    %-15s %-19s %-11s     %-4s\n" $line
     done <<< "$result"
 
     if [[ "$uslov" -ne 1 ]]; then
-        ispis_linija "64" "plava"
+        ispis_linija "60" "plava"
         read -p "Želite li prikazati informacije o vozilu? (da/ne): " odabir
         echo
         if [[ "$odabir" != "da" && "$odabir" != "DA" && "$odabir" != "Da" && "$odabir" != "dA" ]]; then
@@ -136,7 +138,7 @@ informacije_vozilo() {
     
     local voziloID="$1"
     local query="SELECT marka, model, registracija  FROM vozila WHERE vozilo_id=$voziloID"
-    local result=$(mysql -u root -D taxi_sistem -s -N -e "$query")
+    local result=$(mysql -u root -D taxi_sistem -N -e "$query")
 
     echo
     ispis_linija "48" "crvena"
@@ -149,6 +151,7 @@ informacije_vozilo() {
 }
 
 dodavanje_vozila() {
+    
     read -p "Unesite marku vozila: " marka
     read -p "Unesite model vozila: " model
     read -p "Unesite registraciju vozila: " registracija
@@ -172,7 +175,7 @@ dodavanje_vozila() {
     if [[ $voziloID -ne 0 ]]; then
         echo
         query="UPDATE vozac SET vozilo_id=$voziloID WHERE vozac_id=$vozacID"
-        mysql -u root -D taxi_sistem -s -N -e "$query"
+        mysql -u root -D taxi_sistem -N -e "$query"
         clear
         prikaz_vozila_uslov "vozilo_id" "$voziloID"
         ispis_linija "48" "plava"
@@ -358,10 +361,10 @@ brisanje_vozila() {
     read -p "Unesite ID vozila koje zelite obrisati: " voziloID
 
     local query="DELETE FROM vozila WHERE vozilo_id=$voziloID"
-    local result=$(mysql -u root -D taxi_sistem -s -N -e "$query")
+    local result=$(mysql -u root -D taxi_sistem -N -e "$query")
 
     query="UPDATE vozac SET vozilo_id=NULL WHERE vozilo_id=$voziloID"
-    local result1=$(mysql -u root -D taxi_sistem -s -N -e "$query")
+    local result1=$(mysql -u root -D taxi_sistem -N -e "$query")
 
     if [[ -z "$result" ]]; then
         clear
@@ -564,9 +567,10 @@ rezervacija_vozila() {
     local query="SELECT korisnik_id FROM korisnik WHERE ime='$korisnik'"
     local korisnik_id=$(mysql -u root -D taxi_sistem -N -e "$query")
 
-    echo
+    ispis_linija "50" "plava"
+    echo -e "\e[97m"
     read -p "Unesite ID vozila koje zelite rezervisati: " voziloID
-    echo
+    echo -e "\e[0m"
     read -p "Unesite polaziste: " polaziste
     read -p "Unesite odrediste: " odrediste
     read -p "Unesite broj putnika: " br_putnika
@@ -820,7 +824,9 @@ odabir_opcije_admin()
     local brojac=0
     while true; do
         admin_opcije "$brojac"
+        echo -e "\e[97m"
         read -p "Odaberite opciju: " opcija
+        echo -e "\e[0m"
         echo
 
         case "$opcija" in
@@ -891,7 +897,9 @@ odabir_opcije_admin()
                 ;;
             *)
                 clear
-                echo "Neispravan izbor. Pokusajte ponovno."
+                echo -e "   \e[97mNeispravan izbor. Pokusajte ponovno.\e[0m"
+                ispis_linija "40" "plava"
+                echo
                 ;;
         esac
         ((brojac++))
@@ -904,7 +912,9 @@ odabir_opcije_korisnik() {
     local korisnik="$1"
     while true; do
         korisnik_opcije "$brojac"
+        echo -e "\e[97m"
         read -p "Odaberite opciju: " opcija
+        echo -e "\e[0m"
         echo
         case "$opcija" in
             1)
@@ -938,14 +948,17 @@ odabir_opcije_korisnik() {
 
             *)
                 clear
-                echo "Neispravan izbor. Pokusajte ponovno."
-                ;;
+                echo -e "   \e[97mNeispravan izbor. Pokusajte ponovno.\e[0m"
+                ispis_linija "40" "plava"
+                echo
         esac
         ((brojac++))
     done
 }
 
 main() {
+
+    clear
     #source loading.sh
     clear
     while true; do
@@ -954,7 +967,7 @@ main() {
         read username
         echo
         echo -n -e " \e[97mUnesite vašu lozinku: \e[0m"
-        read password
+        read -s password
         echo
         
         if provjera_admin "$username" "$password"; then
@@ -970,7 +983,9 @@ main() {
             odabir_opcije_korisnik "$username"
             break
         else
-            echo -e "\tPogresan username ili lozinka. Pokusajte ponovno."
+            ispis_linija "60" "plava"
+            echo 
+            echo -e "\t\e[1;31mPogresan username ili lozinka. Pokusajte ponovno.\e[0m"
             echo
         fi
     done

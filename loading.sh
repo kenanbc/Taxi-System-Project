@@ -18,7 +18,7 @@ prikaz_logo() {
             echo  -e "██  ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  ██\e[0m"
 
     echo
-    echo -e "\t\t\t   Loading..."
+    echo -e "\t\t\t   \e[97mLoading...\e[0m"
     echo
     brojac=0
     while ((brojac < 33)); do

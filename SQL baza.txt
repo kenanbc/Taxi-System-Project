@@ -24,7 +24,7 @@ CREATE TABLE voznja
 	polaziste varchar(50),
 	odrediste varchar(50),
     	vozac varchar(50),
-   	 broj_putnika int,
+   	broj_putnika int,
     	cijena_voznje int,
 	CONSTRAINT voznja_id PRIMARY KEY (voznja_id)
 );
@@ -41,27 +41,34 @@ CREATE TABLE korisnik
 
 CREATE TABLE vozac
 (
-		vozac_id int NOT NULL AUTO_INCREMENT,
-		ime varchar(50),
-		prezime varchar(50),
+	vozac_id int NOT NULL AUTO_INCREMENT,
+	ime varchar(50),
+	prezime varchar(50),
     	broj_telefona varchar(50),
     	adresa varchar(50),
-		CONSTRAINT PK_vozac_id PRIMARY KEY (vozac_id)
+	CONSTRAINT PK_vozac_id PRIMARY KEY (vozac_id)
+);
+
+CREATE TABLE zarada
+(
+	zarada_id int NOT NULL AUTO_INCREMENT,
+	cijena_voznje int,
+    	vozac_id int,
+    	voznja_id int,
+	CONSTRAINT PK_zarada_id PRIMARY KEY (zarada_id)
 );
 
 INSERT INTO admin (username, lozinka)
 VALUES ('kenanbabic', 'sifra123')
 
-
 INSERT INTO admin (username, lozinka)
 VALUES ('osmanhalilovic', 'sifra123')
 
 INSERT INTO korisnik (ime, lozinka)
-VALUES ('Amina', 'sifra123')
+VALUES ('aminaosmanhodzic', 'sifra123')
 
 INSERT INTO korisnik (ime, lozinka)
-VALUES ('Anis', 'sifra123')
-
+VALUES ('aniskaric', 'sifra123')
 
 INSERT INTO vozila(`marka`, `model`, `registracija`, `stanje`) 
 VALUES ('Volkswagen','Passat B6','A21-J-930','Slobodno')
@@ -75,10 +82,8 @@ VALUES ('Volkswagen','Golf 5','E80-K-734','Servis')
 INSERT INTO vozila(`marka`, `model`, `registracija`, `stanje`) 
 VALUES ('Renault','Scenic','G13-J-630','Zauzeto')
 
-
 INSERT INTO `vozac`( `ime`, `prezime`, `broj_telefona`, `adresa`) 
 VALUES ('Damir','Bajric','0644530155','Rudarska 51')
-
 
 INSERT INTO `vozac`(`ime`, `prezime`, `broj_telefona`, `adresa`)
 VALUES ('Hamid','Rustemovic','061995927','VI Bosanske brigade')
@@ -101,13 +106,11 @@ ADD putnik_id int NOT NULL
 ALTER TABLE voznja
 ADD vozac_id int NOT NULL
 
-
 ALTER TABLE voznja
 DROP COLUMN vozac
 
 ALTER TABLE vozila
 ADD vozac_id int
-
 
 ALTER TABLE voznja
 ADD CONSTRAINT FK_vozilo_id FOREIGN KEY (vozilo_id) REFERENCES vozila (vozilo_id)
