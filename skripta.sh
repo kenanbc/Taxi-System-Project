@@ -340,6 +340,8 @@ ispis_linija()
 
     if [[ "$boja" == "crvena" ]]; then
         boja="\e[31m"
+    elif [[ "$boja" == "zuta" ]]; then
+        boja="\e[33m"
     else
         boja="\e[34m"
     fi
@@ -819,6 +821,37 @@ prikaz_stanja_opcije()
     
 }
 
+kreiranje_korisnika()
+{
+    echo 
+    echo -n -e " \e[97mUnesite vaš username: \e[0m"
+    read ime
+    echo
+    echo -n -e " \e[97mUnesite vašu lozinku: \e[0m"
+    read -s lozinka
+
+    local query="INSERT INTO korisnik (\`ime\`, \`lozinka\`) VALUES ('$ime','$lozinka')"
+    mysql -u root -D taxi_sistem -e "$query"
+
+    query="SELECT ime, lozinka FROM korisnik WHERE BINARY ime LIKE '$ime' AND BINARY lozinka LIKE '$lozinka'"
+    local result=$(mysql -u root -D taxi_sistem -N -e "$query" | wc -l)
+
+    if [[ $result -eq 1 ]]; then
+        clear
+        echo
+        echo -e "\t   \e[1;32mUspjesno ste kreirali profil!\e[0m"
+        ispis_linija "50" "plava"
+    else
+        clear
+        echo -e "\e[1;31mDoslo je do greske! Niste kreirali profil!\e[0m"
+        ispis_linija "40" "plava" 
+    fi
+    echo
+    read -p "Pritisnite enter za nastavak!" nastavak
+    clear
+
+}
+
 odabir_opcije_admin() 
 {
     local brojac=0
@@ -956,38 +989,60 @@ odabir_opcije_korisnik() {
     done
 }
 
+
 main() {
 
     clear
-    #source loading.sh
+    source loading.sh
     clear
     while true; do
-    echo
-        echo -n -e " \e[97mUnesite vaš username: \e[0m"
-        read username
-        echo
-        echo -n -e " \e[97mUnesite vašu lozinku: \e[0m"
-        read -s password
-        echo
-        
-        if provjera_admin "$username" "$password"; then
-            clear
-            echo  -e "   \e[32mUspjesno ste prijavljeni kao admin\e[0m"
-            ispis_linija "40" "crvena"
-            odabir_opcije_admin
-            break  
-        elif provjera_korisnik "$username" "$password"; then
-            clear
-            echo -e "   \e[32mUspjesno ste prijavljeni kao korisnik\e[0m"
-            ispis_linija "40" "crvena"
-            odabir_opcije_korisnik "$username"
-            break
-        else
-            ispis_linija "60" "plava"
-            echo 
-            echo -e "\t\e[1;31mPogresan username ili lozinka. Pokusajte ponovno.\e[0m"
-            echo
-        fi
+        ispis_linija "40" "zuta"
+        echo -e "\t\t\b\b\e[97mDobro dosli!"
+        ispis_linija "40" "zuta"
+        echo -e "\e[97m\t\b\b\b1. Prijava"
+        echo -e "\t\b\b\b2. Registracija"
+        echo -e "\e[0m"
+        read -p "Odaberite opciju: " opcija
+
+        case "$opcija" in
+            1)
+                clear
+                echo
+                echo -n -e " \e[97mUnesite vaš username: \e[0m"
+                read username
+                echo
+                echo -n -e " \e[97mUnesite vašu lozinku: \e[0m"
+                read -s password
+                echo
+                
+                if provjera_admin "$username" "$password"; then
+                    clear
+                    echo  -e "   \e[32mUspjesno ste prijavljeni kao admin\e[0m"
+                    ispis_linija "40" "crvena"
+                    odabir_opcije_admin
+                    break  
+                elif provjera_korisnik "$username" "$password"; then
+                    clear
+                    echo -e "   \e[32mUspjesno ste prijavljeni kao korisnik\e[0m"
+                    ispis_linija "40" "crvena"
+                    odabir_opcije_korisnik "$username"
+                    break
+                else
+                    ispis_linija "60" "plava"
+                    echo 
+                    echo -e "\t\e[1;31mPogresan username ili lozinka. Pokusajte ponovno.\e[0m"
+                    echo
+                fi
+            ;;
+            2)  
+                clear
+                kreiranje_korisnika
+            ;;
+            *)
+                clear
+                echo "Doslo je do greske!"
+            ;;
+        esac
     done
 }
 
