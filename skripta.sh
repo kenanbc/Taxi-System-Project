@@ -167,7 +167,7 @@ dodavanje_vozila() {
     fi
 
     local query="INSERT INTO vozila (\`marka\`, \`model\`, \`registracija\`, \`stanje\` $unos) VALUES ('$marka','$model','$registracija','$stanje' $vrijednost_unosa)"
-    mysql -u root -D taxi_sistem -N -e "$query"
+    mysql -u root -D taxi_sistem -e "$query"
 
     query="SELECT vozilo_id FROM vozila WHERE registracija='$registracija'"
     local voziloID=$(mysql -u root -D taxi_sistem -N -e "$query")
@@ -175,7 +175,7 @@ dodavanje_vozila() {
     if [[ $voziloID -ne 0 ]]; then
         echo
         query="UPDATE vozac SET vozilo_id=$voziloID WHERE vozac_id=$vozacID"
-        mysql -u root -D taxi_sistem -N -e "$query"
+        mysql -u root -D taxi_sistem -e "$query"
         clear
         prikaz_vozila_uslov "vozilo_id" "$voziloID"
         ispis_linija "48" "plava"
@@ -349,7 +349,7 @@ ispis_linija()
     brojac=0
 
     while ((brojac < n)); do
-        echo -n -e $boja"-"$bijela_boja
+        echo -n -e $boja"═"$bijela_boja
         ((brojac++))
     done
     echo
@@ -363,10 +363,10 @@ brisanje_vozila() {
     read -p "Unesite ID vozila koje zelite obrisati: " voziloID
 
     local query="DELETE FROM vozila WHERE vozilo_id=$voziloID"
-    local result=$(mysql -u root -D taxi_sistem -N -e "$query")
+    local result=$(mysql -u root -D taxi_sistem -e "$query")
 
     query="UPDATE vozac SET vozilo_id=NULL WHERE vozilo_id=$voziloID"
-    local result1=$(mysql -u root -D taxi_sistem -N -e "$query")
+    local result1=$(mysql -u root -D taxi_sistem -e "$query")
 
     if [[ -z "$result" ]]; then
         clear
@@ -397,7 +397,7 @@ sql_uredjivanje_vozila() {
     fi
 
     local query="UPDATE vozila SET $celija=$vrijednost_query  WHERE vozilo_id=$voziloID"
-    mysql -u root -D taxi_sistem -N -e "$query"
+    mysql -u root -D taxi_sistem -e "$query"
 
 }
 
@@ -450,7 +450,7 @@ uredjivanje_vozaca() {
                 voziloID="NULL"
 
                 local query="INSERT INTO vozac (\`ime\`, \`prezime\`, \`broj_telefona\`, \`adresa\`, \`vozilo_id\`) VALUES ('$ime','$prezime','$broj_telefona','$adresa', $voziloID)"
-                local result=$(mysql -u root -D taxi_sistem -N -e "$query")
+                local result=$(mysql -u root -D taxi_sistem -e "$query")
 
                 query="SELECT * FROM vozac WHERE ime='$ime'"
                 result=$(mysql -u root -D taxi_sistem -N -e "$query")
@@ -558,7 +558,7 @@ dodavanje_zarade()
     local vozacID="$3"
 
     query="INSERT INTO zarada (\`cijena_voznje\`, \`vozac_id\`, \`voznja_id\`) VALUES ($cijena_voznje, $vozacID, $voznjaID)"
-    mysql -u root -D taxi_sistem -N -e "$query"
+    mysql -u root -D taxi_sistem -e "$query"
 
 }
 
@@ -585,7 +585,7 @@ rezervacija_vozila() {
     local vozacID=$(mysql -u root -D taxi_sistem -N -e "$query")
 
     query="INSERT INTO voznja (\`polaziste\`, \`odrediste\`, \`broj_putnika\`, \`cijena_voznje\`, \`vozilo_id\`, \`putnik_id\`) VALUES ('$polaziste','$odrediste',$br_putnika,$ukupno, $voziloID, $korisnik_id)"
-    local result=$(mysql -u root -D taxi_sistem -N -e "$query")
+    local result=$(mysql -u root -D taxi_sistem -e "$query")
 
     echo
 
@@ -689,10 +689,10 @@ sql_promjena_vozaca()
     local voziloID="$3"
 
     local query="UPDATE vozac SET vozilo_id=$voziloID WHERE vozac_id=$drugi_vozac"
-    mysql -u root -D taxi_sistem -N -e "$query"
+    mysql -u root -D taxi_sistem -e "$query"
 
     query="UPDATE vozac SET vozilo_id=NULL WHERE vozac_id=$prvi_vozac"
-    mysql -u root -D taxi_sistem -N -e "$query"
+    mysql -u root -D taxi_sistem -e "$query"
 
 }
 
@@ -969,7 +969,7 @@ odabir_opcije_korisnik() {
             2)
                 clear
                 informacije_voznje "$korisnik" "1"
-                ispis_linija "64" "plava"
+                ispis_linija "60" "plava"
                 echo
                 read -p "Pritisnite enter za nastavak!" nastavak
                 clear
